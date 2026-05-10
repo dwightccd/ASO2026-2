@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ASO // Tests</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+  :root {
+    --bg:#080b0f; --bg2:#0e1319; --bg3:#151c24; --panel:#101722; --border:#243142; --border2:#304057;
+    --accent:#00d4ff; --accent2:#0098d0; --green:#00ff88; --red:#ff4a69; --yellow:#ffd24a;
+    --text:#d6e6f6; --text2:#94adc3; --text3:#5f7890; --shadow:0 18px 50px rgba(0,0,0,.35);
+    --font:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+  body { margin:0; min-height:100svh; background:radial-gradient(circle at top left, rgba(0,212,255,.08), transparent 34rem), var(--bg); color:var(--text); font-family:var(--font); overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:1000; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,.012) 2px, rgba(0,212,255,.012) 4px); }
+  button, input { font-family:var(--font); }
+  .header { position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; gap:18px; align-items:center; padding:22px max(22px, env(safe-area-inset-left)) 20px; padding-right:max(22px, env(safe-area-inset-right)); background:rgba(14,19,25,.9); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+  .logo { display:flex; align-items:baseline; gap:10px; min-width:0; } .logo-main { color:var(--accent); font-weight:800; letter-spacing:4px; font-size:22px; } .logo-sep { color:var(--border2); } .logo-sub { color:var(--text3); font-size:12px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header-meta { text-align:right; color:var(--text3); font-size:11px; line-height:1.5; } .header-meta span { display:block; color:var(--text2); }
+  #screen-home { max-width:1100px; margin:0 auto; padding:52px 28px 80px; }
+  .home-title { color:var(--text3); font-size:11px; letter-spacing:4px; text-transform:uppercase; margin:0 0 8px; } .home-heading { font-size:clamp(26px,4vw,42px); margin:0 0 8px; } .home-heading span { color:var(--accent); } .home-desc { color:var(--text3); margin:0 0 34px; font-size:13px; line-height:1.7; }
+  .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:0 0 22px; } .mini-stat { border:1px solid var(--border); background:rgba(16,23,34,.72); border-radius:14px; padding:14px; } .mini-stat b { display:block; color:var(--accent); font-size:22px; } .mini-stat span { color:var(--text3); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; }
+  .modules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; }
+  .module-card { border:1px solid var(--border); background:linear-gradient(180deg, rgba(21,28,36,.9), rgba(14,19,25,.95)); border-radius:18px; padding:20px; cursor:pointer; transition:.18s ease; box-shadow:var(--shadow); min-height:132px; } .module-card:hover { transform:translateY(-2px); border-color:var(--accent2); }
+  .module-id { color:var(--accent); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:8px; } .module-name { font-weight:700; line-height:1.45; margin-bottom:14px; } .module-meta { color:var(--text3); font-size:11px; display:flex; gap:16px; } .module-meta i { color:var(--text2); font-style:normal; }
+  .all-modules-btn { width:100%; margin-top:14px; min-height:54px; border:1px solid var(--accent2); border-radius:16px; background:rgba(0,212,255,.06); color:var(--accent); font-weight:800; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+  #screen-quiz, #screen-results { display:none; }
+  .quiz-topbar { position:sticky; top:65px; z-index:40; display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:14px; padding:12px 28px; background:rgba(14,19,25,.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+  .quiz-module-label { color:var(--accent); font-size:10px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; } .progress-bar-wrap { height:4px; background:var(--border); border-radius:10px; overflow:hidden; } .progress-bar-fill { width:0%; height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .25s ease; } .quiz-score-badge { color:var(--text2); font-size:11px; white-space:nowrap; } .btn-exit-quiz { min-height:36px; border:1px solid var(--border2); border-radius:10px; background:transparent; color:var(--text2); padding:0 12px; cursor:pointer; }
+  .question-area { max-width:880px; margin:0 auto; padding:42px 28px 120px; } .q-counter { color:var(--text3); font-size:10px; letter-spacing:3px; text-transform:uppercase; margin:0 0 10px; } .q-type-badge { display:inline-flex; margin-bottom:18px; padding:4px 9px; border:1px solid var(--accent2); border-radius:8px; color:var(--accent); font-size:9px; letter-spacing:2px; text-transform:uppercase; } .type-multi { color:var(--yellow); border-color:rgba(255,210,74,.5); } .type-tf { color:var(--green); border-color:rgba(0,255,136,.45); } .type-fill { color:#ff93cf; border-color:#b64f8b; }
+  .q-text { font-size:clamp(16px,2.1vw,20px); line-height:1.7; margin:0 0 28px; white-space:pre-wrap; }
+  .options-list { list-style:none; padding:0; margin:0; display:grid; gap:11px; } .option-item { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; min-height:52px; padding:15px 16px; border:1px solid var(--border); border-radius:14px; background:rgba(16,23,34,.86); color:var(--text); cursor:pointer; line-height:1.45; font-size:14px; } .option-item:hover:not(.disabled), .option-item.selected { border-color:var(--accent); background:rgba(0,212,255,.08); } .option-letter { color:var(--text3); font-weight:800; } .option-item.correct, .option-item.show-correct { border-color:var(--green); color:var(--green); background:rgba(0,255,136,.08); } .option-item.incorrect { border-color:var(--red); color:var(--red); background:rgba(255,74,105,.08); text-decoration:line-through; } .option-item.disabled { cursor:default; }
+  .fill-input { width:100%; max-width:560px; min-height:54px; border:1px solid var(--border2); border-radius:14px; background:var(--panel); color:var(--text); padding:0 16px; font-size:16px; outline:none; } .fill-input:focus { border-color:var(--accent); } .fill-input.correct { border-color:var(--green); } .fill-input.incorrect { border-color:var(--red); }
+  .feedback-box { display:none; margin-top:22px; padding:16px; border-radius:14px; border-left:4px solid; line-height:1.55; font-size:13px; } .correct-fb { border-color:var(--green); background:rgba(0,255,136,.08); color:var(--green); } .incorrect-fb { border-color:var(--red); background:rgba(255,74,105,.08); color:#ff9aaa; } .feedback-label { display:block; margin-bottom:6px; font-weight:800; letter-spacing:2px; font-size:10px; text-transform:uppercase; }
+  .action-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; } .btn-primary, .btn-secondary { min-height:48px; border-radius:13px; padding:0 22px; letter-spacing:2px; text-transform:uppercase; font-size:11px; cursor:pointer; } .btn-primary { background:var(--accent); color:#001018; border:0; font-weight:900; } .btn-secondary { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+  #screen-results { max-width:900px; margin:0 auto; padding:54px 28px 80px; } .results-header { text-align:center; margin-bottom:34px; } .results-label { color:var(--text3); letter-spacing:4px; font-size:10px; text-transform:uppercase; } .results-score-big { font-size:clamp(52px,10vw,92px); font-weight:900; color:var(--accent); } .results-module-name { color:var(--text3); } .results-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:30px; } .stat-box { border:1px solid var(--border); border-radius:16px; background:var(--panel); padding:18px; text-align:center; } .stat-val { color:var(--accent); font-size:28px; font-weight:900; } .stat-lbl { color:var(--text3); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; } .review-title { color:var(--red); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin:26px 0 14px; } .review-item { border:1px solid var(--border); border-left:4px solid var(--red); background:var(--panel); border-radius:14px; padding:14px; margin-bottom:10px; } .review-q { margin:0 0 10px; line-height:1.55; } .review-answer-row { display:flex; gap:8px; margin-top:6px; font-size:12px; } .review-lbl { color:var(--text3); min-width:88px; } .review-your { color:var(--red); } .review-correct { color:var(--green); } .results-actions { display:flex; gap:12px; flex-wrap:wrap; }
+  .export-box { margin:26px 0 22px; border:1px solid rgba(0,212,255,.22); background:rgba(0,212,255,.045); border-radius:16px; padding:16px; } .export-title { color:var(--accent); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin:0 0 8px; font-weight:900; } .export-hint { color:var(--text2); font-size:13px; line-height:1.6; margin:0; } .export-status { min-height:22px; margin-top:12px; color:var(--green); font-size:12px; line-height:1.5; } .btn-export { background:rgba(0,212,255,.1); color:var(--accent); border:1px solid var(--accent2); }
+  .answer-line { display:block; margin-bottom:10px; } .explain-toggle { display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; min-height:42px; padding:10px 14px; border-radius:12px; border:1px solid var(--border2); background:rgba(255,255,255,.03); color:var(--text); font-family:var(--font); font-size:12px; font-weight:800; letter-spacing:1px; cursor:pointer; touch-action:manipulation; } .explain-toggle:hover { border-color:var(--accent2); color:var(--accent); } .explain-panel { display:none; margin-top:12px; padding:14px 16px; border-radius:12px; border:1px solid rgba(0,212,255,.22); background:rgba(0,212,255,.055); color:var(--text); line-height:1.65; } .explain-panel.open { display:block; } .explain-title { display:block; margin-bottom:6px; color:var(--accent); font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; }
+  @media (max-width: 700px) { .header { padding-top:max(16px, env(safe-area-inset-top)); } .logo-sub,.header-meta { display:none; } #screen-home { padding:34px 16px 90px; } .stats-strip { grid-template-columns:1fr 1fr 1fr; gap:8px; } .mini-stat { padding:12px 10px; } .mini-stat b { font-size:18px; } .modules-grid { grid-template-columns:1fr; } .quiz-topbar { top:58px; grid-template-columns:1fr auto; gap:10px; padding:10px 14px; } .quiz-module-label { overflow:hidden; text-overflow:ellipsis; } .progress-bar-wrap { grid-column:1 / -1; order:3; } .btn-exit-quiz { min-height:34px; } .question-area { padding:28px 16px calc(112px + env(safe-area-inset-bottom)); } .q-text { font-size:16px; } .option-item { grid-template-columns:24px 1fr; min-height:56px; padding:14px; font-size:14px; border-radius:14px; } .action-row { position:fixed; left:0; right:0; bottom:0; z-index:70; padding:12px 14px max(12px, env(safe-area-inset-bottom)); background:rgba(8,11,15,.94); border-top:1px solid var(--border); backdrop-filter:blur(14px); } .btn-primary,.btn-secondary { flex:1; min-width:0; padding:0 10px; min-height:52px; } .feedback-box { margin-bottom:14px; } #screen-results { padding:34px 16px 90px; } .results-stats { gap:8px; } .stat-box { padding:14px 8px; } .results-actions .btn-primary,.results-actions .btn-secondary { flex:1 1 100%; } .explain-toggle { width:100%; min-height:48px; } }
+</style>
+</head>
+<body>
+<header class="header"><div class="logo"><span class="logo-main">ASO</span><span class="logo-sep">//</span><span class="logo-sub">Tests de autoevaluación</span></div><div class="header-meta">Administración de Sistemas Operativos<span id="hdr-info">Banco ASO</span></div></header>
+<main id="screen-home"><p class="home-title">Autoevaluación</p><h1 class="home-heading">Administración de <span>Sistemas Operativos</span></h1><p class="home-desc">// Banco de preguntas ASO conservado. Plantilla visual y funcionalidades tipo SRI, optimizada para ordenador e iPhone.</p><div class="stats-strip"><div class="mini-stat"><b id="total-q">0</b><span>Preguntas</span></div><div class="mini-stat"><b id="total-m">7</b><span>Módulos</span></div><div class="mini-stat"><b>20</b><span>Test global</span></div></div><div class="modules-grid" id="modules-grid"></div><button class="all-modules-btn" onclick="startQuiz('ALL')">▶ &nbsp; Test global aleatorio</button><button class="all-modules-btn" onclick="startQuiz('ALL_FULL')">▶ &nbsp; Todos los test juntos</button></main>
+<section id="screen-quiz"><div class="quiz-topbar"><span class="quiz-module-label" id="quiz-module-label">—</span><div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div><span class="quiz-score-badge" id="quiz-score-badge">0 / 0</span><button class="btn-exit-quiz" onclick="exitQuiz()">Salir</button></div><div class="question-area"><p class="q-counter" id="q-counter"></p><span class="q-type-badge" id="q-type-badge"></span><p class="q-text" id="q-text"></p><ul class="options-list" id="options-list"></ul><div class="fill-wrap" id="fill-wrap" style="display:none"><input type="text" class="fill-input" id="fill-input" placeholder="Escribe tu respuesta..." autocomplete="off" autocapitalize="none" /></div><div class="feedback-box" id="feedback-box"><span class="feedback-label" id="feedback-label"></span><span id="feedback-text"></span></div><div class="action-row"><button class="btn-primary" id="btn-confirm" onclick="confirmAnswer()">Confirmar</button><button class="btn-primary" id="btn-next" onclick="nextQuestion()" style="display:none">Siguiente</button><button class="btn-secondary" id="btn-skip" onclick="skipQuestion()">Omitir</button></div></div></section>
+<section id="screen-results"><div class="results-header"><p class="results-label">Resultado final</p><div class="results-score-big" id="res-score-big">—</div><p class="results-module-name" id="res-module-name">—</p></div><div class="results-stats"><div class="stat-box"><div class="stat-val" id="res-correct">0</div><div class="stat-lbl">Correctas</div></div><div class="stat-box"><div class="stat-val" id="res-incorrect" style="color:var(--red)">0</div><div class="stat-lbl">Incorrectas</div></div><div class="stat-box"><div class="stat-val" id="res-total">0</div><div class="stat-lbl">Total</div></div></div><div class="export-box"><p class="export-title">Exportar resultados</p><p class="export-hint">Para que ChatGPT te analice el progreso: copia el resumen y pégalo en el chat. En iPhone puedes usar también Compartir.</p><div class="export-status" id="export-status"></div></div><div class="review-section" id="review-section"></div><div class="results-actions"><button class="btn-primary btn-export" onclick="copyChatGPTSummary()">Copiar para ChatGPT</button><button class="btn-secondary" onclick="shareChatGPTSummary()">Compartir</button><button class="btn-secondary" onclick="downloadResultsJSON()">Descargar JSON</button><button class="btn-primary" onclick="repeatQuiz()">Repetir</button><button class="btn-primary" id="btn-review-incorrect" onclick="retryIncorrect()" style="display:none">Repasar fallos</button><button class="btn-secondary" onclick="goHome()">Módulos</button></div></section>
+<script>
+const MODULES = [
+  {
+    "id": "ASO01",
+    "name": "Directorio Activo, LDAP y GPO",
+    "questions": [
+      {
+        "type": "single",
+        "text": "\"cn=admin,dc=sored,dc=local\", ¿qué te sugiere?",
+        "options": [
+          "Nada, falta la clave.",
+          "Administrar la base de datos de un LDAP.",
+          "Grupo admin del dominio sored.local.",
+          "Identificación del usuario \"admin\" del dominio sored.local."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Identificación del usuario \"admin\" del dominio sored.local."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es un controlador de dominio?",
+        "options": [
+          "Es un conjunto de ordenadores interconectados entre sí formando una entidad común.",
+          "Son los servidores del tipo Windows Server en cualquiera de sus versiones en la cual cada uno de los servidores tiene una función específica.",
+          "Es una entidad administrativa.",
+          "Es un servidor del tipo Windows Server en cualquiera de sus versiones."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es un servidor del tipo Windows Server en cualquiera de sus versiones."
+      },
+      {
+        "type": "single",
+        "text": "Si queremos crear un subdominio en Active Directory. ¿Qué afirmación es correcta?",
+        "options": [
+          "Hay que configurar el DNS del nuevo servidor para que encuentre el servidor principal del dominio.",
+          "No hay que hacer nada, se realiza al finalizar el proceso de instalación del Active Directory.",
+          "Sólo hace falta habilitar el Netbios para encontrar el dominio principal y proseguirá con la relación de confianza.",
+          "Se crea el subdominio como dominio principal, al reiniciar el equipo, empezará la relación de confianza."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Hay que configurar el DNS del nuevo servidor para que encuentre el servidor principal del dominio."
+      },
+      {
+        "type": "single",
+        "text": "Tras unir un cliente al dominio wac.local, al reiniciar se muestra una nueva opción de inicio de sesión. ¿Cuál es?",
+        "options": [
+          "wac.local\\usuario",
+          "Acceso corporativo wac.local (solo invitado)",
+          "wac\\Administrador",
+          "Iniciar sesión con cuenta Microsoft",
+          "Iniciar sesión con PIN (wac.local)"
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: wac\\Administrador"
+      },
+      {
+        "type": "single",
+        "text": "phpLDAPadmin permite editar...",
+        "options": [
+          "Políticas de contraseñas sin necesidad de añadir entradas ppolicy.",
+          "Los archivos LDIF internos del servidor sin necesidad de acceso root.",
+          "Atributos LDAP de usuarios y OU.",
+          "Esquemas LDAP."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Atributos LDAP de usuarios y OU."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué entendemos por esquema en un entorno LDAP?",
+        "options": [
+          "Es la base de datos del sistema que sirve de referencia o índice de todos los recursos, grupos y usuarios del sistema.",
+          "Un gráfico indicando la organización del LDAP.",
+          "Es un modelo transaccional entre varias bases de datos que se interrelacionan con el sistema base.",
+          "Es un modelo de los datos que pueden almacenarse en LDAP."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es un modelo de los datos que pueden almacenarse en LDAP."
+      },
+      {
+        "type": "single",
+        "text": "Para aplicar una GPO en Windows Server que impida instalar software solo a los usuarios de una OU concreta, ¿qué ajuste es necesario?",
+        "options": [
+          "Hacer que la GPO sea “enforced” para todo el Dominio.",
+          "Enlazar un programa WMI con su directiva.",
+          "Enlazar la GPO a la OU adecuada.",
+          "Enlazar la GPO a nivel de Dominio."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Enlazar la GPO a la OU adecuada."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué hace el siguiente comando \"ldapsearch -x | grep 'mail:' | cut -f 2 > pp; echo $(cat pp | awk '{print $1\",\" }') > email\"?",
+        "options": [
+          "El comando awk no existe.",
+          "El archivo email contendrá la lista de todos los e-mail, separados por comas \",\" y en una sola línea.",
+          "El comando cut está mal configurado.",
+          "El archivo pp tendrá líneas de todos los correos electrónicos."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: El archivo email contendrá la lista de todos los e-mail, separados por comas \",\" y en una sola línea."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es \"nombre distinguido\"?",
+        "options": [
+          "Es un atributo por el que se identifica un objeto.",
+          "Ninguna es correcta.",
+          "Es el alias que se da al dominio.",
+          "Es la identificación de una Unidad Organizativa."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Es un atributo por el que se identifica un objeto."
+      },
+      {
+        "type": "tf",
+        "text": "Hemos instalado, en el servidor, un software que permite imprimir archivos PDF. Es posible administrar derechos y privilegios de acceso a dicho software a usuarios y/o grupos a través del LDAP. ¿Verdadero o falso?",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero"
+      },
+      {
+        "type": "single",
+        "text": "¿Las carpetas son parte del directorio activo?",
+        "options": [
+          "No, es parte del sistema operativo a nivel local.",
+          "Sí, porque el directorio activo controla todas las transacciones del sistema.",
+          "Ninguna respuesta es correcta.",
+          "Sí, dejan de controlarse a nivel local para que lo administre el directorio activo."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: No, es parte del sistema operativo a nivel local."
+      },
+      {
+        "type": "single",
+        "text": "LDAP es un acrónimo que significa \"Protocolo Ligero de Acceso a Directorios\" en castellano. ¿Qué significan cada una de las iniciales?",
+        "options": [
+          "Life Dir Access Protocol.",
+          "Lightweight Directory Access Protocol.",
+          "Light Directory Acces Protocol.",
+          "Little Directory Action Protocol."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Lightweight Directory Access Protocol."
+      },
+      {
+        "type": "single",
+        "text": "¿Un nombre de dominio debe estar cualificado por un registrador en Internet?",
+        "options": [
+          "Sí, todos los dominios deben ser cualificados.",
+          "Ninguna de las otras respuestas es correcta.",
+          "No, pero es conveniente que el nombre no sea registrable.",
+          "No, pero el dominio no será \"visible\" por la red."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: No, pero el dominio no será \"visible\" por la red."
+      },
+      {
+        "type": "single",
+        "text": "FusionDirectory permite gestionar políticas de contraseñas ya que…",
+        "options": [
+          "Incorpora un plugin ppolicy.",
+          "Utiliza un motor MySQL interno.",
+          "Es una interfaz para Samba y no para LDAP.",
+          "Las políticas de contraseñas vienen activadas por defecto en cualquier instalación de OpenLDAP.",
+          "Solo funciona en Windows."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Incorpora un plugin ppolicy."
+      }
+    ]
+  },
+  {
+    "id": "ASO02",
+    "name": "Procesos, planificación y servicios",
+    "questions": [
+      {
+        "type": "single",
+        "text": "¿Cómo se denomina al suceso que origina un error en la ejecución de un proceso?",
+        "options": [
+          "Expropiación.",
+          "Excepción.",
+          "Bloqueo.",
+          "Interrupción."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Excepción."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es un proceso?",
+        "options": [
+          "El mecanismo de planificación de la memoria.",
+          "Un fragmento de programa en ejecución.",
+          "La forma en que se maneja un recurso.",
+          "Un método para gestionar el sistema operativo."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Un fragmento de programa en ejecución."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes operaciones NO podemos llevar a cabo a través del Monitor del sistema de GNU/Linux?",
+        "options": [
+          "Bloquear el proceso.",
+          "Matar el proceso.",
+          "Cambiar la prioridad del proceso.",
+          "Detener el proceso."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Bloquear el proceso."
+      },
+      {
+        "type": "single",
+        "text": "¿Cómo se ejecuta, por regla general, un demonio?",
+        "options": [
+          "En segundo plano.",
+          "Los demonios no pueden ejecutarse en ningún plano.",
+          "Lo hace tanto en primer como en segundo plano.",
+          "En primer plano."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: En segundo plano."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué significa que un algoritmo sigue política expropiativa?",
+        "options": [
+          "Que el intercambio de procesos entre colas no es restringido.",
+          "Que los procesos pueden eliminarse en cualquier momento.",
+          "Que se puede limitar el espacio en memoria de un proceso.",
+          "Que puede retirarse el acceso a un recurso en cualquier momento."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Que puede retirarse el acceso a un recurso en cualquier momento."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué orden utilizaríamos en Windows para terminar el proceso con PID 1234?",
+        "options": [
+          "kill sigterm 1234.",
+          "sudo kill sigterm 1234.",
+          "taskkill /pid 1234.",
+          "taskkill 1234."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: taskkill /pid 1234."
+      },
+      {
+        "type": "single",
+        "text": "¿Con qué runlevel o nivel de ejecución se reiniciaría un sistema GNU/Linux?",
+        "options": [
+          "Runlevel 0",
+          "Runlevel 5",
+          "Runlevel 2",
+          "Runlevel 6",
+          "Runlevel 1"
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Runlevel 6"
+      },
+      {
+        "type": "single",
+        "text": "Si un quantum es demasiado pequeño para el algoritmo Round Robin, ¿qué ocurre?",
+        "options": [
+          "Se reduce el rendimiento por exceso de cambios de contexto.",
+          "El algoritmo se vuelve SJF ya que usaría demasiada memoria.",
+          "El sistema aumenta automáticamente el quantum.",
+          "Los procesos nunca terminarían.",
+          "Los procesos cortos dejan de ser favorecidos."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Se reduce el rendimiento por exceso de cambios de contexto."
+      },
+      {
+        "type": "single",
+        "text": "Al usar el comando tasklist | sort en CMD para ordenar procesos se obtiene un orden incorrecto. ¿Por qué?",
+        "options": [
+          "tasklist siempre ordena aleatoriamente.",
+          "sort siempre ignora los espacios.",
+          "El comando no está bien escrito.",
+          "sort ordena alfabéticamente, no numéricamente.",
+          "PID no puede ordenarse desde CMD."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: sort ordena alfabéticamente, no numéricamente."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de estos algoritmos se parece más al comportamiento real de Linux moderno?",
+        "options": [
+          "Planificador híbrido con múltiples colas.",
+          "FCFS.",
+          "FIFO puro.",
+          "SJF no apropiativo",
+          "Round Robin estricto."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Planificador híbrido con múltiples colas."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes señales relativa a procesos en GNU/Linux es inmediata y no puede ser ignorada o postergada?",
+        "options": [
+          "SIGKILL",
+          "SIGQUIT",
+          "SIGSTOP",
+          "SIGTERM"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: SIGKILL"
+      },
+      {
+        "type": "single",
+        "text": "Un alumno lanza firefox & y luego afirma que por estar en background tiene menos prioridad. ¿Qué comando demostraría que esto no es necesariamente cierto?",
+        "options": [
+          "nice -n 0 firefox",
+          "ps -o pid,ni,stat -p <PID>",
+          "top -H",
+          "jobs -l"
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: ps -o pid,ni,stat -p <PID>"
+      },
+      {
+        "type": "single",
+        "text": "¿Puede un proceso terminado volver a ejecutarse?",
+        "options": [
+          "No, porque pasa a memoria secundaria.",
+          "Sí, pero debe crearse de nuevo.",
+          "Sí, pero debe pasar antes al estado bloqueado.",
+          "No, no es posible."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Sí, pero debe crearse de nuevo."
+      },
+      {
+        "type": "single",
+        "text": "systemctl stop cron para un demonio, pero al momento vuelve a iniciarse. ¿Cuál es el motivo?",
+        "options": [
+          "Porque el demonio está enmascarado.",
+          "Que solo el usuario root puede detenerlo.",
+          "Que es necesario reiniciar el equipo.",
+          "Porque no se puede parar el demonio cron.",
+          "Una unidad dependiente o timer lo reactiva."
+        ],
+        "correct": [
+          4
+        ],
+        "explanation": "Respuesta correcta: Una unidad dependiente o timer lo reactiva."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes algoritmos de planificación utiliza el cuanto?",
+        "options": [
+          "SJF.",
+          "RR.",
+          "FCFS.",
+          "SRT."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: RR."
+      },
+      {
+        "type": "single",
+        "text": "¿Cómo se llama el sistema que sutituye al arranque clásico con SysV en distribuciones Linux modernas?",
+        "options": [
+          "systemd",
+          "dmesg",
+          "GRUB",
+          "XDM"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: systemd"
+      },
+      {
+        "type": "single",
+        "text": "¿Qué origina la ejecución de la orden pstree en GNU/Linux?",
+        "options": [
+          "El listado de los procesos en forma de árbol.",
+          "Esta orden no existe en GNU/Linux.",
+          "Los procesos en ejecución y el plano en el que están.",
+          "El árbol de archivos del sistema."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: El listado de los procesos en forma de árbol."
+      },
+      {
+        "type": "single",
+        "text": "En “Servidor local”, un servicio aparece con StartType = Automatic pero Estado = Stopped en Windows Server. ¿Qué indica probablemente?",
+        "options": [
+          "Que está en modo de mantenimiento",
+          "Que es un servicio zombie.",
+          "Que falló al arrancar por dependencia rota.",
+          "Que el servicio está configurado como Manual.",
+          "Que está detenido siempre que no haya usuarios conectados."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Que falló al arrancar por dependencia rota."
+      }
+    ]
+  },
+  {
+    "id": "ASO03",
+    "name": "Monitorización y rendimiento del sistema",
+    "questions": [
+      {
+        "type": "single",
+        "text": "Se utiliza rsync para copiar el /home a otro disco. ¿Qué ventaja clave aporta frente a una copia tradicional?",
+        "options": [
+          "Es más lento pero más seguro.",
+          "Permite copiar solo cambios, optimizando tiempo y espacio.",
+          "Copia siempre todos los archivos.",
+          "Utiliza una interfaz gráfica."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Permite copiar solo cambios, optimizando tiempo y espacio."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué herramienta es válida para monitorizar, gráficamente, los archivos de mensajes en GNU/Linux?",
+        "options": [
+          "gnome-system-tools.",
+          "gsystemlog.",
+          "logs-system.",
+          "gnome-system-log."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: gnome-system-log."
+      },
+      {
+        "type": "tf",
+        "text": "Con el monitor de rendimiento de Windows Server, en el apartado de rendimiento, podemos evaluar el rendimiento de un equipo del dominio. ¿Verdadero o falso?",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero"
+      },
+      {
+        "type": "single",
+        "text": "¿Qué realiza klogd?",
+        "options": [
+          "Se encarga de generar mensajes con los accesos externos.",
+          "Ninguna es correcta.",
+          "Se encarga de los mensajes del kernel de Windows Server.",
+          "Se encarga de los mensajes del kernel de GNU/Linux."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Se encarga de los mensajes del kernel de GNU/Linux."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué protocolo se usa en la difusión de los recursos de Windows?",
+        "options": [
+          "SMB/CIFS.",
+          "SMB.",
+          "NTFS.",
+          "NFS."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: SMB/CIFS."
+      },
+      {
+        "type": "single",
+        "text": "¿Las estadísticas son necesarias para conocer el rendimiento?",
+        "options": [
+          "No, tenemos alternativas para evitar las estadísticas. Con la observación diaria puede ser suficiente.",
+          "No, con analizar, mediante filtros, los mensajes del sistema sería suficiente.",
+          "Ninguna respuesta es correcta.",
+          "Sí, aunque tenemos alternativas más tediosas."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Sí, aunque tenemos alternativas más tediosas."
+      },
+      {
+        "type": "single",
+        "text": "Al monitorizar en GNU/Linux con top, ¿qué NO es lo que aparece en la cabecera?",
+        "options": [
+          "NI.",
+          "GROUP.",
+          "PR.",
+          "PDI."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: GROUP."
+      },
+      {
+        "type": "single",
+        "text": "Si queremos que en el inicio GNU/Linux, tome un recurso, por ejemplo de Windows, ¿qué archivo debemos tocar para conseguir tal fin?",
+        "options": [
+          "Modificar el archivo /etc/fstab.",
+          "Ninguna es correcta.",
+          "Modificar el archivo /etc/filesystems.",
+          "Modificar el archivo /etc/exports."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Modificar el archivo /etc/fstab."
+      },
+      {
+        "type": "single",
+        "text": "En Debian, ¿con cuál de estos comandos podemos instalar paquetes?",
+        "options": [
+          "apt-get.",
+          "rpm.",
+          "yum.",
+          "get."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: apt-get."
+      },
+      {
+        "type": "single",
+        "text": "Tras instalar sysstat, los comandos sar no muestran datos históricos inmediatamente. ¿Cuál es la causa?",
+        "options": [
+          "Falta instalar ksar.",
+          "Los datos se generan de forma periódica.",
+          "Es necesario ejecutar manualmente sar con permisos root para comenzar a registrar datos.",
+          "sar solo funciona en modo gráfico.",
+          "sysstat necesita reiniciar el sistema."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Los datos se generan de forma periódica."
+      },
+      {
+        "type": "single",
+        "text": "Las estructuras de directorios, ¿son iguales en todos los sistemas operativos?",
+        "options": [
+          "Ninguna respuesta es correcta.",
+          "Sí, aunque hay diferencias en cómo nombrarlos, su estructura es igual.",
+          "No, son similares pero hay diferencias que deben tenerse en cuenta.",
+          "Sí, aunque no se llamen igual, su estructura es la misma."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: No, son similares pero hay diferencias que deben tenerse en cuenta."
+      },
+      {
+        "type": "single",
+        "text": "Una métrica muestra un alto uso de red, pero bajo uso de CPU y memoria. ¿Cuál crees que es la situación es más probable de ello?",
+        "options": [
+          "Un ataque al sistema",
+          "Un error de monitorización",
+          "Un proceso de copia o transferencia",
+          "Un fallo de hardware"
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Un proceso de copia o transferencia"
+      },
+      {
+        "type": "single",
+        "text": "El análisis BPA de Windows Server muestra una advertencia relacionada con servicios no configurados según las prácticas recomendadas. ¿Cuál es el objetivo principal del BPA?",
+        "options": [
+          "Optimizar automáticamente el sistema",
+          "Sustituir al Monitor de rendimiento",
+          "Comparar la configuración con estándares recomendados",
+          "Identificar configuraciones que pueden afectar a la seguridad, rendimiento o disponibilidad del rol",
+          "Detectar malware"
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Identificar configuraciones que pueden afectar a la seguridad, rendimiento o disponibilidad del rol"
+      },
+      {
+        "type": "single",
+        "text": "Con la opción de confiabilidad de Windows Server, ¿qué podemos observar?",
+        "options": [
+          "Los avisos del mensaje.",
+          "Los mensajes del sistema por días.",
+          "Los mensajes del sistema por orden de importancia.",
+          "Los mensajes graves del sistema."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Los mensajes del sistema por días."
+      }
+    ]
+  },
+  {
+    "id": "ASO04",
+    "name": "Acceso remoto, SSH y escritorio remoto",
+    "questions": [
+      {
+        "type": "single",
+        "text": "¿En qué equipo es recomendable instalar el rol de Servicios de Escritorio Remoto?",
+        "options": [
+          "En el servidor donde está IIS.",
+          "En un servidor donde no esté instalado IIS.",
+          "En un equipo que no sea controlador de dominio.",
+          "En un equipo que sea controlador de dominio."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: En un equipo que no sea controlador de dominio."
+      },
+      {
+        "type": "fill",
+        "text": "¿Con qué opción del comando ssh se realiza una redirección de puertos local para crear el túnel SSH?",
+        "correct": [
+          "-L"
+        ],
+        "hint": "Una sola letra/opción, incluyendo el guión.",
+        "explanation": "Respuesta correcta: -L"
+      },
+      {
+        "type": "single",
+        "text": "¿Cuántos servidores WSUS puede haber en una misma red?",
+        "options": [
+          "Tantos como se estimen necesarios, según la arquitectura.",
+          "Sólo es posible un servidor WSUS por red.",
+          "Ninguno, ya que dicho servidor debe estar fuera de la red.",
+          "Dos: un servidor principal y otro de seguridad."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Tantos como se estimen necesarios, según la arquitectura."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes es un tipo de shell en Linux?",
+        "options": [
+          "GNOME.",
+          "Bash.",
+          "Lsh.",
+          "CMD."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Bash."
+      },
+      {
+        "type": "single",
+        "text": "¿Dónde se instala la aplicación NoMachine NX?",
+        "options": [
+          "El paquete Client NX en el cliente y el paquete Server NX en el servidor.",
+          "El paquete Server NX en el cliente y el paquete Client NX en el cliente.",
+          "En el equipo desde el que se realiza el acceso remoto.",
+          "Sólo es necesario instalar un paquete en el servidor."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: El paquete Client NX en el cliente y el paquete Server NX en el servidor."
+      },
+      {
+        "type": "single",
+        "text": "Si en Debian me encuentro en la consola TTY4, ¿qué operación debo realizar para ir a la consola TTY5?",
+        "options": [
+          "[Alt]+[<-].",
+          "[Ctrl]+[Alt]+[5].",
+          "[Alt]+[5].",
+          "[Alt]+[F5]."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: [Alt]+[F5]."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué servicios deben estar activos para poder utilizar WDS?",
+        "options": [
+          "DFS y DHCP.",
+          "DNS y NFS.",
+          "DHCP y DNS.",
+          "DFS y DNS."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: DHCP y DNS."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes servicios no forma parte del rol de Servicios de Escritorio Remoto?",
+        "options": [
+          "Escritorio Remote.",
+          "Administrador de licencias de RDS.",
+          "Agente de sesiones de RDS.",
+          "Gestor de conexiones RemoteApp."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Gestor de conexiones RemoteApp."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué puerto utiliza por defecto Webmin?",
+        "options": [
+          "100.",
+          "10000.",
+          "1000.",
+          "22."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: 10000."
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes afirmaciones sobre administración remota es CIERTA?",
+        "options": [
+          "Puede hacerse a través de Internet.",
+          "Puede usarse Internet, pero es necesaria la autorización del ISP.",
+          "El alcance máximo es la propia LAN.",
+          "El técnico no puede saber con exactitud a cuántos equipos da soporte."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Puede hacerse a través de Internet."
+      },
+      {
+        "type": "fill",
+        "text": "Indica el comando y parámetros válidos que permiten crear una redirección de puerto local para que el puerto local 5252 se utilice como acceso a un servicio de base de datos remoto (el puerto por defecto de MySQL es el 3306).",
+        "correct": [
+          "ssh -L 5252:localhost:3306 usuario@servidor_remoto"
+        ],
+        "hint": "Formato: ssh -L puerto_local:host_remoto:puerto_remoto usuario@servidor",
+        "explanation": "Respuesta correcta: ssh -L 5252:localhost:3306 usuario@servidor_remoto"
+      },
+      {
+        "type": "single",
+        "text": "¿Dónde se instala la aplicación Xming?",
+        "options": [
+          "El paquete Server Xming en el cliente y el paquete Client Xming en el cliente.",
+          "Sólo es necesario instalar un paquete en el servidor.",
+          "En el equipo desde el que se realiza el acceso remoto.",
+          "El paquete Client Xming en el cliente y el paquete Server Xming en el servidor."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: En el equipo desde el que se realiza el acceso remoto."
+      },
+      {
+        "type": "single",
+        "text": "Si el túnel SSH se crea desde Windows Server hacia GNU/Linux usando el puerto local 5252, ¿qué comando describe mejor el objetivo del túnel?",
+        "options": [
+          "Permitir conexiones SSH simultáneas desde ambos servidores.",
+          "Acceder al servicio MySQL remoto como si fuera local mediante un puerto distinto.",
+          "Redirigir el puerto 5252 del servidor Linux hacia MySQL en Windows.",
+          "Sustituir el puerto 3306 de MySQL por 5252 en el servidor Linux."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Acceder al servicio MySQL remoto como si fuera local mediante un puerto distinto."
+      },
+      {
+        "type": "single",
+        "text": "¿En qué archivo de configuración se puede modificar el puerto por defecto del servicio SSH?",
+        "options": [
+          "/etc/ssh/ssh_config",
+          "/etc/network/interfaces",
+          "/etc/ssh/sshd_config",
+          "/etc/services"
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: /etc/ssh/sshd_config"
+      }
+    ]
+  },
+  {
+    "id": "ASO05",
+    "name": "Servidores de impresión",
+    "questions": [
+      {
+        "type": "single",
+        "text": "¿Cuál de estos sistemas de impresión es válido, normalmente, en impresoras?",
+        "options": [
+          "Offset.",
+          "Láser.",
+          "Estereotipia.",
+          "Xilografía."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Láser."
+      },
+      {
+        "type": "tf",
+        "text": "Un servidor Windows Server puede compartir las impresoras sin necesidad de instalar el servidor de impresión. ¿Verdadero o falso?",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero"
+      },
+      {
+        "type": "single",
+        "text": "¿Por qué se recomienda utilizar impresoras virtuales HP para la realización de la práctica de Administración de servidores de impresión?",
+        "options": [
+          "Porque Windows no detecta otros fabricantes",
+          "Porque dichos controladores no necesitan puerto IPP.",
+          "Porque HP incluye gran cantidad de controladores compatibles (HPLIP).",
+          "Porque consumen menos recursos del sistema."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Porque HP incluye gran cantidad de controladores compatibles (HPLIP)."
+      },
+      {
+        "type": "single",
+        "text": "¿Podríamos compartir una impresora conectada por bluetooth?",
+        "options": [
+          "Sí, en cualquier caso.",
+          "No, sólo es posible una conexión.",
+          "Ninguna es correcta.",
+          "Sí, siempre y cuando el sistema operativo permita compartir el recurso."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Sí, siempre y cuando el sistema operativo permita compartir el recurso."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué te sugiere el comando \"lpstat –t\"?",
+        "options": [
+          "Obtiene toda la información de las impresoras y sus estados.",
+          "Es un comando GNU/Linux para agregar impresoras.",
+          "Nada.",
+          "Es un comando de Windows para obtener detalladamente el estado de las impresoras."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Obtiene toda la información de las impresoras y sus estados."
+      },
+      {
+        "type": "single",
+        "text": "Con CUPS, ¿podríamos imprimir directamente sin pasar por SAMBA?",
+        "options": [
+          "No, sólo se puede hacer a través de SAMBA.",
+          "No, no se puede imprimir de ninguna manera, no se \"entienden\" GNU/Linux y Windows.",
+          "Ninguna respuesta es correcta.",
+          "Sí, configurando la cola de impresión adecuadamente."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Sí, configurando la cola de impresión adecuadamente."
+      },
+      {
+        "type": "single",
+        "text": "Una impresora está conectada, localmente, a un equipo y este está conectado a un router. ¿Podemos compartir el recurso?",
+        "options": [
+          "Sí, en cualquier caso.",
+          "No, en ningún caso.",
+          "Sí, siempre y cuando el equipo esté preparado para escuchar el puerto IPP.",
+          "No, aunque se puede compartir localmente no hay otros equipos en la red."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Sí, siempre y cuando el equipo esté preparado para escuchar el puerto IPP."
+      },
+      {
+        "type": "single",
+        "text": "¿Podrías montar un equipo sencillo, con Windows 10, un servidor de impresión?",
+        "options": [
+          "Sí, aunque con algunas limitaciones propias de su sistema operativo.",
+          "Sí, con un mínimo de 4 Gb.",
+          "No, porque su sistema operativo no permite multitarea.",
+          "No, porque puede colapsar la red local."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Sí, aunque con algunas limitaciones propias de su sistema operativo."
+      },
+      {
+        "type": "tf",
+        "text": "Un cliente GNU/Linux puede imprimir sobre una impresora virtual que genera archivos xps. ¿Verdadero o falso?",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso"
+      },
+      {
+        "type": "single",
+        "text": "IPP está construido sobre…",
+        "options": [
+          "HTTP.",
+          "Es un protocolo independiente.",
+          "SOCKET.",
+          "TCP/IP."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: HTTP."
+      },
+      {
+        "type": "single",
+        "text": "Tenemos un servidor SAMBA y varias impresoras en un servidor GNU/Linux, una de ellas virtual que genera archivos PDF. ¿Podemos, desde un equipo con Windows, imprimir en una impresora virtual PDF de GNU/Linux?",
+        "options": [
+          "No, Windows no permite imprimir en impresoras virtuales remotas.",
+          "Sí, siempre y cuando tengamos el controlador adecuado.",
+          "Sí, podemos agregarla de forma automática.",
+          "Ninguna es correcta."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Sí, siempre y cuando tengamos el controlador adecuado."
+      }
+    ]
+  },
+  {
+    "id": "ASO06",
+    "name": "Scripts y variables de entorno",
+    "questions": [
+      {
+        "type": "single",
+        "text": "La nomenclatura #!/bin/bash es...",
+        "options": [
+          "En Windows indica que los scripts utilizarán la shell de Bash.",
+          "Se utiliza en los scripts en GNU/Linux en la primera línea e indica que se debe ejecutar siguiendo los criterios de la shell de Bash.",
+          "En GNU/Linux indica modo depuración.",
+          "Ninguna respuesta es correcta."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Se utiliza en los scripts en GNU/Linux en la primera línea e indica que se debe ejecutar siguiendo los criterios de la shell de Bash."
+      },
+      {
+        "type": "single",
+        "text": "En Windows, ¿Dónde podemos encontrar las variables de entorno predefinidas?",
+        "options": [
+          "Sólo en la variable del registro HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session.",
+          "En las variables del registro HKEY_CURRENT_USER\\Environment y HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session.",
+          "Igual que en GNU/Linux, no hay una base de datos donde se guarde esa información.",
+          "Ninguna respuesta es correcta."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: En las variables del registro HKEY_CURRENT_USER\\Environment y HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session."
+      },
+      {
+        "type": "tf",
+        "text": "En GNU/Linux, podemos manipular con scripts el LDAP. ¿Verdadero o falso?",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero"
+      },
+      {
+        "type": "single",
+        "text": "¿Los scripts pueden utilizar y manipular las variables de entorno?",
+        "options": [
+          "No, sólo se utilizan como información al usuario.",
+          "Sí, si lo pasamos como parámetro al programa de script.",
+          "Sí, pero deben asignársela a una variable propia del programa.",
+          "Sí, se pueden utilizar y manipular."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Sí, se pueden utilizar y manipular."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué te sugiere %PROGRAMFILES%?",
+        "options": [
+          "Ninguna respuesta es correcta.",
+          "Indica la ruta a los programas del sistema operativo de Windows.",
+          "Indica la ruta a los programas del usuario en Windows.",
+          "Es una variable de entorno indicando la ruta a los programas en Windows."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es una variable de entorno indicando la ruta a los programas en Windows."
+      },
+      {
+        "type": "single",
+        "text": "En un GNU/Linux, qué contiene el archivo ~/.bashrc.",
+        "options": [
+          "Hace referencia al script de inicio del usuario donde está alojado el archivo.",
+          "Hace referencia al tipo de shell que utilizará el usuario.",
+          "Ninguna respuesta es correcta.",
+          "Hace referencia al script de inicio de todos los usuarios."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Hace referencia al script de inicio del usuario donde está alojado el archivo."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué extensiones son válidas para los scripts de Windows?",
+        "options": [
+          "Sólo son válidas BAT y CMD.",
+          "Sólo es válida CMD.",
+          "Son válidas CMD y PS1.",
+          "Las extensiones válidas son BAT, CMD y PS1."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Las extensiones válidas son BAT, CMD y PS1."
+      },
+      {
+        "type": "single",
+        "text": "La variable de entorno EDITOR, ¿qué te sugiere?",
+        "options": [
+          "Ninguna respuesta es correcta.",
+          "Nada, no es una variable de entorno.",
+          "Es una variable de entorno de Windows e indica la ruta al programa de edición que se utilizará para cualquier archivo.",
+          "Es una variable de entorno de GNU/Linux e indica la ruta al programa que se utilizará en la edición de los archivos."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es una variable de entorno de GNU/Linux e indica la ruta al programa que se utilizará en la edición de los archivos."
+      },
+      {
+        "type": "single",
+        "text": "Si ejecutamos echo $PATH, ¿Qué obtendremos?",
+        "options": [
+          "Nos aparecerá la ruta de búsqueda en Windows.",
+          "Es una variable de entorno y no se visualizará nada.",
+          "El comando es erróneo.",
+          "Nos aparecerá la ruta de búsqueda en GNU/Linux."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Nos aparecerá la ruta de búsqueda en GNU/Linux."
+      },
+      {
+        "type": "single",
+        "text": "echo $PATH, ¿qué conseguiremos?",
+        "options": [
+          "La variable de entorno es de Windows y la instrucción de GNU/Linux, no hará nada.",
+          "Es una instrucción y una variable de entorno de GNU/Linux y nos mostrará todas las rutas de búsqueda.",
+          "Es una instrucción de Windows que nos mostrará las rutas de búsqueda.",
+          "Es una instrucción de GNU/Linux y una variable de entorno de Windows, no hará nada."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Es una instrucción y una variable de entorno de GNU/Linux y nos mostrará todas las rutas de búsqueda."
+      }
+    ]
+  },
+  {
+    "id": "ASO07",
+    "name": "Compartición de recursos y redes",
+    "questions": [
+      {
+        "type": "single",
+        "text": "Si uno de los equipos de la red tiene como sistema operativo MacOSX, ¿podría imprimir en una impresora que tenga, como sistema operativo, GNU/Linux?",
+        "options": [
+          "Sí, es más, MacOSX es una evolución de UNIX, al igual que GNU/Linux.",
+          "Sí, pero debe realizarse a través de una aplicación de enlace.",
+          "Ninguna respuesta es correcta.",
+          "No, por no utilizar protocolos comunes."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Sí, es más, MacOSX es una evolución de UNIX, al igual que GNU/Linux."
+      },
+      {
+        "type": "single",
+        "text": "Si queremos que un ordenador de una red físicamente separada acceda a un servidor, sea Windows Server o GNU/Linux, ¿cómo lo podemos hacer?",
+        "options": [
+          "Un router sólo puede dejar pasar hacia un servidor.",
+          "Los routers intermedios no tienen capacidad de realizar DMZ.",
+          "Mediante un router intermedio y mapear los distintos puertos hacia el servidor que deseamos.",
+          "Se necesita un switch inteligente que separe las redes virtuales."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Mediante un router intermedio y mapear los distintos puertos hacia el servidor que deseamos."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué protocolos podemos utilizar para compartir recursos?",
+        "options": [
+          "NFS, SMB/CIFS.",
+          "Ninguna respuesta es correcta.",
+          "TCP/IP, IPX.",
+          "NTFS, SAMBA."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: NFS, SMB/CIFS."
+      },
+      {
+        "type": "single",
+        "text": "En GNU/Linux tenemos compartido, además de espacio en un recurso de almacenamiento masivo, una impresora PDF. ¿Qué necesitaría Windows para poder \"imprimir\" un PDF en ese recurso?",
+        "options": [
+          "Ninguna respuesta es correcta.",
+          "Necesita controladores de GNU/Linux para PDF.",
+          "Instalar los controladores necesarios.",
+          "No se puede \"imprimir\" en este formato."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Instalar los controladores necesarios."
+      },
+      {
+        "type": "single",
+        "text": "En Windows, si queremos que un recurso sea accesible por un grupo o usuario determinado, debemos…",
+        "options": [
+          "Debe darse permiso en la pestaña de seguridad y del recurso.",
+          "Ninguna respuesta es correcta.",
+          "Es suficiente añadirlo en permisos de seguridad.",
+          "Es suficiente añadirlo en permisos del recurso."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Debe darse permiso en la pestaña de seguridad y del recurso."
+      },
+      {
+        "type": "single",
+        "text": "¿Qué protocolo se utiliza actualmente para realizar la resolución de nombres de dominio entre máquinas de Windows?",
+        "options": [
+          "Netbios sobre TCP/IP.",
+          "Netbios.",
+          "Ninguna respuesta es correcta.",
+          "Netbeui."
+        ],
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Netbios sobre TCP/IP."
+      },
+      {
+        "type": "single",
+        "text": "Tenemos una máquina con GNU/Linux y otro con Windows 10. La máquina con Windows 10 comparte una carpeta para toda la red en modo lectura. ¿Qué necesitamos en GNU/Linux para poder acceder a ese recurso?",
+        "options": [
+          "Debemos tener instalado el servidor Samba de intercambio de archivos.",
+          "Ninguna respuesta es correcta.",
+          "Debemos tener instalado el cliente Samba.",
+          "Nada, porque ya tiene el software necesario."
+        ],
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Debemos tener instalado el cliente Samba."
+      },
+      {
+        "type": "single",
+        "text": "Samba es…",
+        "options": [
+          "Ninguna respuesta es correcta.",
+          "El protocolo que utiliza GNU/Linux para acceder a recursos Windows.",
+          "Es exactamente lo mismo que SMB/CIFS.",
+          "Es un servidor de recursos en GNU/Linux."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es un servidor de recursos en GNU/Linux."
+      },
+      {
+        "type": "single",
+        "text": "Dos redes separadas física y lógicamente por un router. ¿Puede un equipo de una de las redes, acceder a los recursos de un servidor de otra red?",
+        "options": [
+          "No, porque el router no encamina protocolos de aplicación.",
+          "Ninguna es correcta.",
+          "Sí, cualquier equipo de una red puede acceder a los recursos de cualquier ordenador de la otra red.",
+          "Sí, si está correctamente configurado el router."
+        ],
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Sí, si está correctamente configurado el router."
+      },
+      {
+        "type": "single",
+        "text": "El sistema de archivos de MacOSX es HFS+. ¿Es posible compartir archivos de este sistema con sistemas basados en GNU/Linux y sistema de archivos EXT3?",
+        "options": [
+          "No, MacOSX no tiene soporte SMB/CIFS.",
+          "Sí, si ambos sistemas operativos tienen el soporte de compartición de recursos.",
+          "Sí, si los sistemas operativos basados en GNU/Linux tienen instalado el paquete MNFS.",
+          "No, MacOSX no tiene soporte NFS."
+        ],
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Sí, si ambos sistemas operativos tienen el soporte de compartición de recursos."
+      }
+    ]
+  }
+];
+const GLOBAL_QUIZ_SIZE = 20;
+let currentModuleId=null, currentQuestions=[], currentIndex=0, selected=[], answered=false, correctCount=0, incorrect=[], lastResult=null;
+const $=id=>document.getElementById(id);
+function shuffle(a){const x=[...a]; for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]];} return x;}
+function shuffleOptionsForQuestion(q){
+  const nq={...q, correct:Array.isArray(q.correct)?[...q.correct]:q.correct};
+  if(!nq.options || nq.type==='fill') return nq;
+  const correctSet=new Set(Array.isArray(nq.correct)?nq.correct:[nq.correct]);
+  const pairs=shuffle(nq.options.map((text,idx)=>({text,idx})));
+  nq.options=pairs.map(p=>p.text);
+  nq.correct=pairs.map((p,newIdx)=>correctSet.has(p.idx)?newIdx:null).filter(v=>v!==null).sort((a,b)=>a-b);
+  return nq;
+}
+function prepareQuestion(q){ return shuffleOptionsForQuestion({...q, moduleId:q.moduleId, moduleName:q.moduleName}); }
+function allQuestions(){return MODULES.flatMap(m=>m.questions.map(q=>({...q,moduleId:m.id,moduleName:m.name})));}
+function init(){ $('total-q').textContent=allQuestions().length; $('total-m').textContent=MODULES.length; const grid=$('modules-grid'); grid.innerHTML=''; MODULES.forEach(m=>{const c=document.createElement('div'); c.className='module-card'; c.onclick=()=>startQuiz(m.id); c.innerHTML=`<div class="module-id">${m.id}</div><div class="module-name">${escapeHTML(m.name)}</div><div class="module-meta"><span><i>${m.questions.length}</i> preguntas</span></div>`; grid.appendChild(c);}); }
+function startQuiz(moduleId, customQuestions=null, label=null){ currentModuleId=moduleId; let pool; if(customQuestions) pool=shuffle(customQuestions).map(prepareQuestion); else if(moduleId==='ALL') pool=shuffle(allQuestions()).slice(0, Math.min(GLOBAL_QUIZ_SIZE, allQuestions().length)).map(prepareQuestion); else if(moduleId==='ALL_FULL') pool=shuffle(allQuestions()).map(prepareQuestion); else {const m=MODULES.find(x=>x.id===moduleId); pool=shuffle(m.questions.map(q=>({...q,moduleId:m.id,moduleName:m.name}))).map(prepareQuestion);} currentQuestions=pool; currentIndex=0; selected=[]; answered=false; correctCount=0; incorrect=[]; $('screen-home').style.display='none'; $('screen-results').style.display='none'; $('screen-quiz').style.display='block'; $('quiz-module-label').textContent=label || (moduleId==='ALL'?'Test global':moduleId==='ALL_FULL'?'Todos los test juntos':MODULES.find(m=>m.id===moduleId).id+' — '+MODULES.find(m=>m.id===moduleId).name); renderQuestion(); window.scrollTo(0,0); }
+function typeLabel(t){return t==='multi'?'Respuesta múltiple':t==='tf'?'Verdadero/Falso':t==='fill'?'Completar':'Respuesta única';}
+function renderQuestion(){const q=currentQuestions[currentIndex]; selected=[]; answered=false; $('q-counter').textContent=`Pregunta ${currentIndex+1} de ${currentQuestions.length}`; const badge=$('q-type-badge'); badge.textContent=typeLabel(q.type); badge.className='q-type-badge type-'+(q.type==='multi'?'multi':q.type==='tf'?'tf':q.type==='fill'?'fill':'single'); $('q-text').textContent=q.text; $('options-list').innerHTML=''; $('feedback-box').style.display='none'; $('btn-confirm').style.display='inline-block'; $('btn-next').style.display='none'; $('btn-skip').style.display='inline-block'; $('progress-fill').style.width=`${(currentIndex/currentQuestions.length)*100}%`; $('quiz-score-badge').innerHTML=`<b>${correctCount}</b> / ${currentIndex}`; if(q.type==='fill'){$('fill-wrap').style.display='block'; const inp=$('fill-input'); inp.value=''; inp.placeholder=q.hint||'Escribe tu respuesta...'; inp.disabled=false; inp.className='fill-input'; setTimeout(()=>inp.focus(),100); inp.onkeydown=e=>{if(e.key==='Enter') confirmAnswer();};} else {$('fill-wrap').style.display='none'; (q.options||[]).forEach((opt,i)=>{const li=document.createElement('li'); li.className='option-item'; li.onclick=()=>toggleOption(i,li,q.type); li.innerHTML=`<span class="option-letter">${String.fromCharCode(97+i)}.</span><span>${escapeHTML(opt)}</span>`; $('options-list').appendChild(li);});} }
+function toggleOption(i,el,type){ if(answered) return; if(type==='multi'){ if(selected.includes(i)){selected=selected.filter(x=>x!==i); el.classList.remove('selected');} else {selected.push(i); el.classList.add('selected');} } else { selected=[i]; document.querySelectorAll('.option-item').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); } }
+function norm(v){return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.`'"“”]/g,'').replace(/\s+/g,' ').trim();}
+function escapeHTML(s){ return String(s).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function toggleExplanation(id,btn){ const panel=$(id); if(!panel) return; const open=!panel.classList.contains('open'); panel.classList.toggle('open', open); if(btn) btn.textContent=open?'Ocultar explicación':'Ver explicación'; }
+function correctText(q){ return q.type==='fill' ? (q.correct||[]).join(' / ') : (q.correct||[]).map(i=>(q.options||[])[i]).join(' / '); }
+function buildWhyExplanation(q){ const t=norm((q.text||'')+' '+correctText(q)+' '+(q.moduleName||'')); const has=(...xs)=>xs.every(x=>t.includes(norm(x))); if(has('ldap')) return 'La pregunta pertenece a LDAP/Directorio Activo: fíjate en términos como DN, cn, dc, OU, esquema y atributos, porque suelen diferenciar la opción correcta.'; if(has('gpo')) return 'Las GPO se aplican enlazándolas al contenedor adecuado, como dominio u OU. En preguntas de alcance, la clave suele ser dónde se enlaza.'; if(has('proceso')||has('demonio')||has('systemctl')) return 'Repasa estados de procesos, señales, servicios y planificación. La respuesta correcta se basa en el comportamiento real del sistema operativo.'; if(has('ssh')||has('tunel')||has('remoto')) return 'En acceso remoto conviene distinguir cliente, servidor, puerto local, puerto remoto y archivo de configuración del servicio.'; if(has('impresora')||has('cups')||has('ipp')) return 'En impresión, separa protocolo, controlador, cola de impresión y sistema que comparte el recurso.'; if(has('variable')||has('script')||has('bash')) return 'En scripts, la clave es distinguir variables de entorno, rutas, extensiones y shell usada para ejecutar el archivo.'; if(has('samba')||has('smb')||has('recurso')) return 'En recursos compartidos, distingue protocolo, permisos de recurso, permisos de seguridad y cliente/servidor necesario.'; return 'La clave está en asociar el concepto de la pregunta con la respuesta correcta indicada. Repasa el término, comando, puerto o componente porque suele aparecer con opciones cambiadas de orden.'; }
+function makeFeedbackHTML(q){ const answer=q.explanation || ('Respuesta correcta: '+correctText(q)); const why=buildWhyExplanation(q); const id='why-'+currentIndex+'-'+Date.now(); return `<span class="answer-line">${escapeHTML(answer)}</span><button type="button" class="explain-toggle" onclick="toggleExplanation('${id}', this)">Ver explicación</button><div class="explain-panel" id="${id}"><span class="explain-title">¿Por qué?</span>${escapeHTML(why)}</div>`; }
+function confirmAnswer(){ if(answered) return; const q=currentQuestions[currentIndex]; let ok=false, user=''; if(q.type==='fill'){const val=$('fill-input').value; user=val||'Sin respuesta'; ok=(q.correct||[]).some(a=>norm(a)===norm(val)); $('fill-input').disabled=true; $('fill-input').classList.add(ok?'correct':'incorrect'); } else { if(selected.length===0) return; const s=[...selected].sort((a,b)=>a-b).join(','); const c=[...(q.correct||[])].sort((a,b)=>a-b).join(','); ok=s===c; user=selected.map(i=>q.options[i]).join(' | '); document.querySelectorAll('.option-item').forEach((el,i)=>{el.classList.add('disabled'); if(q.correct.includes(i)) el.classList.add('show-correct'); if(selected.includes(i) && !q.correct.includes(i)) el.classList.add('incorrect'); if(selected.includes(i) && q.correct.includes(i)) el.classList.add('correct');}); } answered=true; const fb=$('feedback-box'); fb.style.display='block'; fb.className='feedback-box '+(ok?'correct-fb':'incorrect-fb'); $('feedback-label').textContent=ok?'Correcto':'Incorrecto'; $('feedback-text').innerHTML=makeFeedbackHTML(q); if(ok) correctCount++; else incorrect.push({q,user}); $('btn-confirm').style.display='none'; $('btn-next').style.display='inline-block'; $('btn-skip').style.display='none'; $('quiz-score-badge').innerHTML=`<b>${correctCount}</b> / ${currentIndex+1}`; }
+function skipQuestion(){ incorrect.push({q:currentQuestions[currentIndex],user:'Omitida'}); nextQuestion(); }
+function nextQuestion(){ if(currentIndex<currentQuestions.length-1){currentIndex++; renderQuestion(); window.scrollTo(0,0);} else showResults(); }
+function showResults(){ const total=currentQuestions.length; const pct=Math.round((correctCount/total)*100); $('screen-quiz').style.display='none'; $('screen-results').style.display='block'; $('res-score-big').textContent=pct+'%'; $('res-module-name').textContent=currentModuleId==='ALL'?'Test global aleatorio':currentModuleId==='ALL_FULL'?'Todos los test juntos':$('quiz-module-label').textContent; $('res-correct').textContent=correctCount; $('res-incorrect').textContent=incorrect.length; $('res-total').textContent=total; const rev=$('review-section'); rev.innerHTML=''; if(incorrect.length){ const title=document.createElement('div'); title.className='review-title'; title.textContent=`Preguntas falladas u omitidas (${incorrect.length})`; rev.appendChild(title); incorrect.forEach((it,idx)=>{const el=document.createElement('div'); el.className='review-item'; el.innerHTML=`<p class="review-q">${idx+1}. ${escapeHTML(it.q.text)}</p><div class="review-answer-row"><span class="review-lbl">Tu respuesta:</span><span class="review-your">${escapeHTML(it.user)}</span></div><div class="review-answer-row"><span class="review-lbl">Correcta:</span><span class="review-correct">${escapeHTML(correctText(it.q))}</span></div>`; rev.appendChild(el);}); $('btn-review-incorrect').style.display='inline-block'; } else {$('btn-review-incorrect').style.display='none';} lastResult=buildResultPayload(); setExportStatus(''); window.scrollTo(0,0); }
+function buildResultPayload(){ const by={}; currentQuestions.forEach(q=>{const k=q.moduleName||q.moduleId||'Sin módulo'; if(!by[k]) by[k]={total:0,aciertos:0,fallos:0}; by[k].total++; }); incorrect.forEach(it=>{const k=it.q.moduleName||it.q.moduleId||'Sin módulo'; if(by[k]) by[k].fallos++; }); Object.values(by).forEach(s=>s.aciertos=s.total-s.fallos); return {asignatura:'ASO',fecha:new Date().toLocaleString(),modulo:currentModuleId==='ALL'?'Test global':currentModuleId==='ALL_FULL'?'Todos los test juntos':$('quiz-module-label').textContent,total:currentQuestions.length,aciertos:correctCount,fallos:incorrect.length,porcentaje:Math.round((correctCount/currentQuestions.length)*100),estadisticas_por_modulo:by,preguntas_falladas:incorrect.map(it=>({modulo:it.q.moduleName||it.q.moduleId,pregunta:it.q.text,respuesta_usuario:it.user,respuesta_correcta:correctText(it.q)}))}; }
+function resultSummaryText(payload=lastResult){
+  if(!payload) return 'No hay resultados todavía.';
+  const stats=Object.entries(payload.estadisticas_por_modulo||{})
+    .map(([mod,s])=>`- ${mod}: ${s.aciertos}/${s.total} aciertos, ${s.fallos} fallos`)
+    .join('\n');
+  const fallos=(payload.preguntas_falladas||[])
+    .map((f,i)=>`${i+1}. [${f.modulo}] ${f.pregunta}\n   Mi respuesta: ${f.respuesta_usuario}\n   Correcta: ${f.respuesta_correcta}`)
+    .join('\n');
+  return `RESULTADO TEST ASO\nFecha: ${payload.fecha}\nMódulo: ${payload.modulo}\nPuntuación: ${payload.aciertos}/${payload.total} (${payload.porcentaje}%)\nFallos u omitidas: ${payload.fallos}\n\nESTADÍSTICAS POR MÓDULO\n${stats||'- Sin datos'}\n\nPREGUNTAS FALLADAS U OMITIDAS\n${fallos||'- Ninguna'}\n\nAnalízame estos resultados: dime mis temas débiles, qué preguntas debo repasar primero y un plan corto de estudio para mejorar.`;
+}
+function setExportStatus(msg, ok=true){ const el=$('export-status'); if(el){ el.style.color=ok?'var(--green)':'var(--red)'; el.textContent=msg; } }
+async function copyChatGPTSummary(){ const text=resultSummaryText(); try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); } else { const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); ta.remove(); } setExportStatus('Resumen copiado. Pégalo en ChatGPT para analizar tus fallos.'); }catch(e){ setExportStatus('No se pudo copiar automáticamente. Usa Compartir o descarga el JSON.', false); } }
+async function shareChatGPTSummary(){ const text=resultSummaryText(); try{ if(navigator.share){ await navigator.share({title:'Resultados test ASO', text}); setExportStatus('Resumen compartido.'); } else { await copyChatGPTSummary(); } }catch(e){ if(e && e.name==='AbortError') return; setExportStatus('No se pudo compartir. Prueba con Copiar para ChatGPT.', false); } }
+function downloadResultsJSON(){ const payload=lastResult||buildResultPayload(); const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); a.href=url; a.download=`resultado-aso-${stamp}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); setExportStatus('JSON descargado. Puedes guardarlo o pasarlo a ChatGPT.'); }
+function retryIncorrect(){ if(!incorrect.length) return; startQuiz(currentModuleId, incorrect.map(x=>x.q), 'Repaso de fallos'); }
+function repeatQuiz(){ startQuiz(currentModuleId==='ALL'?'ALL':currentModuleId==='ALL_FULL'?'ALL_FULL':currentModuleId); }
+function goHome(){ $('screen-results').style.display='none'; $('screen-quiz').style.display='none'; $('screen-home').style.display='block'; window.scrollTo(0,0); }
+function exitQuiz(){ $('screen-quiz').style.display='none'; $('screen-home').style.display='block'; window.scrollTo(0,0); }
+init();
+</script>
+</body>
+</html>
